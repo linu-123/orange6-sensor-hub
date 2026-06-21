@@ -1,0 +1,942 @@
+#:kivy 2.0
+#:import MDFlatButton kivymd.uix.button.MDFlatButton
+#:import MDIcon kivymd.uix.icon.MDIcon
+#:import MDSwitch kivymd.uix.switch.MDSwitch
+#:import MDSeparator kivymd.uix.separator.MDSeparator
+#:import Window kivy.core.window.Window
+
+<Orange6App>:
+    theme_cls: app.theme_cls
+    md_bg_color: app.theme_cls.bg_normal
+
+    ScreenManager:
+        id: screen_manager
+
+        # ========== 首页仪表盘 ==========
+        MDScreen:
+            name: 'dashboard'
+            md_bg_color: app.theme_cls.bg_normal
+
+            MDBoxLayout:
+                orientation: 'vertical'
+                spacing: 0
+
+                # 状态栏/标题栏
+                MDTopAppBar:
+                    title: '🍊 橘子6 传感器'
+                    elevation: 2
+                    md_bg_color: app.theme_cls.primary_color
+                    specific_text_color: 1, 1, 1, 1
+                    right_action_items:
+                        [["refresh", lambda x: app.refresh_sensors()], ["information-outline", lambda x: setattr(screen_manager, 'current', 'about')]]
+
+                # 可滚动内容
+                ScrollView:
+                    do_scroll_x: False
+                    MDBoxLayout:
+                        orientation: 'vertical'
+                        padding: dp(12)
+                        spacing: dp(12)
+                        size_hint_y: None
+                        height: self.minimum_height
+
+                        # ---- GPS状态卡片 ----
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(120)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'vertical'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDBoxLayout:
+                                orientation: 'horizontal'
+                                size_hint_y: None
+                                height: dp(30)
+
+                                MDIcon:
+                                    icon: 'map-marker'
+                                    theme_text_color: 'Custom'
+                                    text_color: app.theme_cls.primary_color
+                                    size_hint_x: None
+                                    width: dp(30)
+
+                                MDLabel:
+                                    text: 'GPS 定位'
+                                    theme_text_color: 'Primary'
+                                    font_style: 'H6'
+                                    size_hint_x: 0.4
+
+                                Widget:
+
+                                MDSwitch:
+                                    id: gps_switch
+                                    active: app.gps.gps_active
+                                    on_active: app.toggle_gps(self.active)
+
+                            MDLabel:
+                                id: gps_label
+                                text: app.gps.get_location_text()
+                                theme_text_color: 'Secondary'
+                                font_style: 'Caption'
+                                size_hint_y: None
+                                height: dp(60)
+
+                        # ---- 电池状态卡片 ----
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'vertical'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDBoxLayout:
+                                orientation: 'horizontal'
+
+                                MDIcon:
+                                    icon: 'battery-charging' if app.sensors.battery_charging else 'battery'
+                                    theme_text_color: 'Custom'
+                                    text_color: app.theme_cls.primary_color
+                                    size_hint_x: None
+                                    width: dp(30)
+
+                                MDLabel:
+                                    text: f"电池: {app.sensors.battery_level:.0f}%"
+                                    theme_text_color: 'Primary'
+                                    font_style: 'Subtitle1'
+
+                                Widget:
+
+                                MDLabel:
+                                    text: '充电中' if app.sensors.battery_charging else '未充电'
+                                    theme_text_color: 'Secondary'
+                                    font_style: 'Caption'
+
+                        # ---- 传感器总览卡片 ----
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(400)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'vertical'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDBoxLayout:
+                                orientation: 'horizontal'
+                                size_hint_y: None
+                                height: dp(30)
+
+                                MDIcon:
+                                    icon: 'sensors'
+                                    theme_text_color: 'Custom'
+                                    text_color: app.theme_cls.primary_color
+                                    size_hint_x: None
+                                    width: dp(30)
+
+                                MDLabel:
+                                    text: '传感器实时数据'
+                                    theme_text_color: 'Primary'
+                                    font_style: 'H6'
+
+                                Widget:
+
+                                MDFlatButton:
+                                    text: '查看全部 →'
+                                    on_release: setattr(screen_manager, 'current', 'sensors')
+
+                            # 加速度
+                            SensorRow:
+                                sensor_name: '加速度传感器'
+                                sensor_icon: '📐'
+                                sensor_value: app.sensors.get_sensor_display_value('accelerometer')
+                                sensor_unit: 'm/s²'
+                                status_color: app.sensors.get_sensor_status_color('accelerometer')
+
+                            # 陀螺仪
+                            SensorRow:
+                                sensor_name: '陀螺仪'
+                                sensor_icon: '🌀'
+                                sensor_value: app.sensors.get_sensor_display_value('gyroscope')
+                                sensor_unit: 'rad/s'
+                                status_color: app.sensors.get_sensor_status_color('gyroscope')
+
+                            # 地磁
+                            SensorRow:
+                                sensor_name: '地磁传感器'
+                                sensor_icon: '🧲'
+                                sensor_value: app.sensors.get_sensor_display_value('magnetic_field')
+                                sensor_unit: 'μT'
+                                status_color: app.sensors.get_sensor_status_color('magnetic_field')
+
+                            # 光线
+                            SensorRow:
+                                sensor_name: '光线传感器'
+                                sensor_icon: '☀️'
+                                sensor_value: app.sensors.get_sensor_display_value('light')
+                                sensor_unit: 'lux'
+                                status_color: app.sensors.get_sensor_status_color('light')
+
+                            # 距离
+                            SensorRow:
+                                sensor_name: '距离传感器'
+                                sensor_icon: '📏'
+                                sensor_value: app.sensors.get_sensor_display_value('proximity')
+                                sensor_unit: 'cm'
+                                status_color: app.sensors.get_sensor_status_color('proximity')
+
+                            # 计步器
+                            SensorRow:
+                                sensor_name: '计步器'
+                                sensor_icon: '🚶'
+                                sensor_value: app.sensors.get_sensor_display_value('step_counter')
+                                sensor_unit: '步'
+                                status_color: app.sensors.get_sensor_status_color('step_counter')
+
+                            # 心率
+                            SensorRow:
+                                sensor_name: '心率'
+                                sensor_icon: '❤️'
+                                sensor_value: app.sensors.get_sensor_display_value('heart_rate')
+                                sensor_unit: 'bpm'
+                                status_color: app.sensors.get_sensor_status_color('heart_rate')
+
+                            MDSeparator:
+                                height: dp(1)
+
+                            MDLabel:
+                                text: '传感器连接状态: 正常' if app.sensors.is_connected else '传感器状态: 未连接'
+                                theme_text_color: 'Custom'
+                                text_color: (0.2, 0.8, 0.2, 1) if app.sensors.is_connected else (0.8, 0.2, 0.2, 1)
+                                font_style: 'Caption'
+                                halign: 'center'
+
+                        # ---- 底部导航 ----
+                        MDBottomNavigation:
+                            id: bottom_nav
+                            size_hint_y: None
+                            height: dp(56)
+
+                            MDBottomNavigationItem:
+                                name: 'dashboard'
+                                text: '首页'
+                                icon: 'home'
+
+                            MDBottomNavigationItem:
+                                name: 'camera'
+                                text: '相机'
+                                icon: 'camera'
+
+                            MDBottomNavigationItem:
+                                name: 'sensors'
+                                text: '传感器'
+                                icon: 'sensors'
+
+                            MDBottomNavigationItem:
+                                name: 'about'
+                                text: '关于'
+                                icon: 'information'
+
+        # ========== 相机页面 ==========
+        MDScreen:
+            name: 'camera'
+            md_bg_color: app.theme_cls.bg_normal
+
+            MDBoxLayout:
+                orientation: 'vertical'
+
+                MDTopAppBar:
+                    title: '📷 相机'
+                    elevation: 2
+                    md_bg_color: app.theme_cls.primary_color
+                    specific_text_color: 1, 1, 1, 1
+                    left_action_items:
+                        [["arrow-left", lambda x: setattr(screen_manager, 'current', 'dashboard')]]
+                    right_action_items:
+                        [["camera-flip-outline", lambda x: app.switch_camera()]]
+
+                # 相机预览区域
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: dp(12)
+                    spacing: dp(12)
+
+                    # 相机预览占位
+                    MDCard:
+                        size_hint: 1, 0.6
+                        radius: [dp(12),]
+                        elevation: 2
+                        md_bg_color: app.theme_cls.bg_dark
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            padding: dp(20)
+
+                            MDIcon:
+                                icon: 'camera'
+                                theme_text_color: 'Custom'
+                                text_color: 1, 1, 1, 0.3
+                                size_hint: 1, 0.5
+                                halign: 'center'
+                                valign: 'middle'
+                                font_size: dp(80)
+
+                            MDLabel:
+                                text: '相机预览区域'
+                                theme_text_color: 'Custom'
+                                text_color: 1, 1, 1, 0.5
+                                halign: 'center'
+                                font_style: 'H5'
+
+                            MDLabel:
+                                text: f'当前: {"前置摄像头" if app.camera.is_front_camera else "后置摄像头"}'
+                                theme_text_color: 'Custom'
+                                text_color: 1, 1, 1, 0.7
+                                halign: 'center'
+                                font_style: 'Subtitle1'
+
+                    # 控制按钮
+                    MDBoxLayout:
+                        orientation: 'horizontal'
+                        size_hint_y: None
+                        height: dp(60)
+                        spacing: dp(20)
+                        padding: dp(20), 0
+
+                        Widget:
+
+                        MDFloatingActionButton:
+                            icon: 'camera'
+                            md_bg_color: app.theme_cls.primary_color
+                            on_release: app.take_photo()
+
+                        Widget:
+
+                    # 拍照信息
+                    MDCard:
+                        size_hint_y: None
+                        height: dp(60)
+                        padding: dp(12)
+                        radius: [dp(12),]
+                        elevation: 1
+
+                        MDLabel:
+                            text: f'最后拍照: {app.camera.last_photo_path or "尚未拍照"}'
+                            theme_text_color: 'Secondary'
+                            font_style: 'Caption'
+                            shorten: True
+                            max_lines: 2
+
+        # ========== 传感器总览页面 ==========
+        MDScreen:
+            name: 'sensors'
+            md_bg_color: app.theme_cls.bg_normal
+
+            MDBoxLayout:
+                orientation: 'vertical'
+
+                MDTopAppBar:
+                    title: '📊 传感器总览'
+                    elevation: 2
+                    md_bg_color: app.theme_cls.primary_color
+                    specific_text_color: 1, 1, 1, 1
+                    left_action_items:
+                        [["arrow-left", lambda x: setattr(screen_manager, 'current', 'dashboard')]]
+                    right_action_items:
+                        [["refresh", lambda x: app.refresh_sensors()]]
+
+                ScrollView:
+                    do_scroll_x: False
+                    MDGridLayout:
+                        cols: 1
+                        spacing: dp(8)
+                        padding: dp(12)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        adaptive_height: True
+
+                        # 加速度传感器详情
+                        SensorDetailCard:
+                            sensor_name: '加速度传感器'
+                            sensor_icon: '📐'
+                            sensor_key: 'accelerometer'
+                            value_x: f'{app.sensors.accelerometer[0]:+.1f}'
+                            value_y: f'{app.sensors.accelerometer[1]:+.1f}'
+                            value_z: f'{app.sensors.accelerometer[2]:+.1f}'
+                            unit: 'm/s²'
+                            status_color: app.sensors.get_sensor_status_color('accelerometer')
+
+                        # 陀螺仪详情
+                        SensorDetailCard:
+                            sensor_name: '陀螺仪'
+                            sensor_icon: '🌀'
+                            sensor_key: 'gyroscope'
+                            value_x: f'{app.sensors.gyroscope[0]:+.2f}'
+                            value_y: f'{app.sensors.gyroscope[1]:+.2f}'
+                            value_z: f'{app.sensors.gyroscope[2]:+.2f}'
+                            unit: 'rad/s'
+                            status_color: app.sensors.get_sensor_status_color('gyroscope')
+
+                        # 地磁传感器详情
+                        SensorDetailCard:
+                            sensor_name: '地磁传感器'
+                            sensor_icon: '🧲'
+                            sensor_key: 'magnetic_field'
+                            value_x: f'{app.sensors.magnetic_field[0]:+.1f}'
+                            value_y: f'{app.sensors.magnetic_field[1]:+.1f}'
+                            value_z: f'{app.sensors.magnetic_field[2]:+.1f}'
+                            unit: 'μT'
+                            status_color: app.sensors.get_sensor_status_color('magnetic_field')
+
+                        # 光线
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'horizontal'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '☀️ 光线传感器'
+                                font_style: 'Subtitle1'
+                                size_hint_x: 0.4
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                size_hint_x: 0.3
+
+                                MDLabel:
+                                    text: f'{app.sensors.light:.0f}'
+                                    font_style: 'H4'
+                                    theme_text_color: 'Primary'
+                                    halign: 'center'
+
+                                MDLabel:
+                                    text: 'lux'
+                                    font_style: 'Caption'
+                                    theme_text_color: 'Secondary'
+                                    halign: 'center'
+
+                            MDSwitch:
+                                id: light_switch
+                                active: app.sensors.sensor_status.get('light', False)
+
+                        # 距离
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'horizontal'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '📏 距离传感器'
+                                font_style: 'Subtitle1'
+                                size_hint_x: 0.4
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                size_hint_x: 0.3
+
+                                MDLabel:
+                                    text: f'{app.sensors.proximity:.1f}'
+                                    font_style: 'H4'
+                                    theme_text_color: 'Primary'
+                                    halign: 'center'
+
+                                MDLabel:
+                                    text: 'cm'
+                                    font_style: 'Caption'
+                                    theme_text_color: 'Secondary'
+                                    halign: 'center'
+
+                            MDSwitch:
+                                id: proximity_switch
+                                active: app.sensors.sensor_status.get('proximity', False)
+
+                        # 气压
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'horizontal'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '🌡 气压传感器'
+                                font_style: 'Subtitle1'
+                                size_hint_x: 0.4
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                size_hint_x: 0.3
+
+                                MDLabel:
+                                    text: f'{app.sensors.pressure:.1f}'
+                                    font_style: 'H4'
+                                    theme_text_color: 'Primary'
+                                    halign: 'center'
+
+                                MDLabel:
+                                    text: 'hPa'
+                                    font_style: 'Caption'
+                                    theme_text_color: 'Secondary'
+                                    halign: 'center'
+
+                        # 湿度
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'horizontal'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '💧 湿度传感器'
+                                font_style: 'Subtitle1'
+                                size_hint_x: 0.4
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                size_hint_x: 0.3
+
+                                MDLabel:
+                                    text: f'{app.sensors.humidity:.0f}'
+                                    font_style: 'H4'
+                                    theme_text_color: 'Primary'
+                                    halign: 'center'
+
+                                MDLabel:
+                                    text: '%'
+                                    font_style: 'Caption'
+                                    theme_text_color: 'Secondary'
+                                    halign: 'center'
+
+                        # 温度
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'horizontal'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '🌡 温度传感器'
+                                font_style: 'Subtitle1'
+                                size_hint_x: 0.4
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                size_hint_x: 0.3
+
+                                MDLabel:
+                                    text: f'{app.sensors.temperature:.1f}'
+                                    font_style: 'H4'
+                                    theme_text_color: 'Primary'
+                                    halign: 'center'
+
+                                MDLabel:
+                                    text: '°C'
+                                    font_style: 'Caption'
+                                    theme_text_color: 'Secondary'
+                                    halign: 'center'
+
+                        # 重力
+                        SensorDetailCard:
+                            sensor_name: '重力传感器'
+                            sensor_icon: '⬇️'
+                            sensor_key: 'gravity'
+                            value_x: f'{app.sensors.gravity[0]:+.1f}'
+                            value_y: f'{app.sensors.gravity[1]:+.1f}'
+                            value_z: f'{app.sensors.gravity[2]:+.1f}'
+                            unit: 'm/s²'
+                            status_color: app.sensors.get_sensor_status_color('gravity')
+
+                        # 线性加速度
+                        SensorDetailCard:
+                            sensor_name: '线性加速度'
+                            sensor_icon: '🚀'
+                            sensor_key: 'linear_acceleration'
+                            value_x: f'{app.sensors.linear_acceleration[0]:+.2f}'
+                            value_y: f'{app.sensors.linear_acceleration[1]:+.2f}'
+                            value_z: f'{app.sensors.linear_acceleration[2]:+.2f}'
+                            unit: 'm/s²'
+                            status_color: app.sensors.get_sensor_status_color('linear_acceleration')
+
+                        # 旋转向量
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'horizontal'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '🔄 旋转向量'
+                                font_style: 'Subtitle1'
+                                size_hint_x: 0.4
+
+                            MDLabel:
+                                text: app.sensors.get_sensor_display_value('rotation_vector')
+                                font_style: 'Subtitle2'
+                                theme_text_color: 'Secondary'
+                                size_hint_x: 0.6
+
+                        # 计步器
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'horizontal'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '🚶 计步器'
+                                font_style: 'Subtitle1'
+                                size_hint_x: 0.4
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                size_hint_x: 0.3
+
+                                MDLabel:
+                                    text: f'{int(app.sensors.step_counter)}'
+                                    font_style: 'H4'
+                                    theme_text_color: 'Primary'
+                                    halign: 'center'
+
+                                MDLabel:
+                                    text: '步'
+                                    font_style: 'Caption'
+                                    theme_text_color: 'Secondary'
+                                    halign: 'center'
+
+                        # 心率
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: dp(12)
+                            spacing: dp(8)
+                            orientation: 'horizontal'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '❤️ 心率'
+                                font_style: 'Subtitle1'
+                                size_hint_x: 0.4
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                size_hint_x: 0.3
+
+                                MDLabel:
+                                    text: f'{app.sensors.heart_rate:.0f}'
+                                    font_style: 'H4'
+                                    theme_text_color: 'Primary'
+                                    halign: 'center'
+
+                                MDLabel:
+                                    text: 'bpm'
+                                    font_style: 'Caption'
+                                    theme_text_color: 'Secondary'
+                                    halign: 'center'
+
+
+        # ========== 关于页面 ==========
+        MDScreen:
+            name: 'about'
+            md_bg_color: app.theme_cls.bg_normal
+
+            MDBoxLayout:
+                orientation: 'vertical'
+
+                MDTopAppBar:
+                    title: 'ℹ️ 关于'
+                    elevation: 2
+                    md_bg_color: app.theme_cls.primary_color
+                    specific_text_color: 1, 1, 1, 1
+                    left_action_items:
+                        [["arrow-left", lambda x: setattr(screen_manager, 'current', 'dashboard')]]
+
+                ScrollView:
+                    do_scroll_x: False
+                    MDBoxLayout:
+                        orientation: 'vertical'
+                        padding: dp(24)
+                        spacing: dp(16)
+                        size_hint_y: None
+                        height: self.minimum_height
+
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(200)
+                            padding: dp(20)
+                            orientation: 'vertical'
+                            elevation: 3
+                            radius: [dp(16),]
+                            md_bg_color: app.theme_cls.primary_light
+
+                            MDIcon:
+                                icon: 'cellphone-information'
+                                font_size: dp(60)
+                                halign: 'center'
+                                theme_text_color: 'Custom'
+                                text_color: 1, 1, 1, 1
+                                size_hint_y: None
+                                height: dp(60)
+
+                            MDLabel:
+                                text: '🍊 橘子6 全传感器'
+                                font_style: 'H4'
+                                halign: 'center'
+                                theme_text_color: 'Custom'
+                                text_color: 1, 1, 1, 1
+
+                            MDLabel:
+                                text: 'Orange 6 Sensor Hub v1.0.0'
+                                font_style: 'Subtitle1'
+                                halign: 'center'
+                                theme_text_color: 'Custom'
+                                text_color: 1, 1, 1, 0.8
+
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(180)
+                            padding: dp(16)
+                            orientation: 'vertical'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '📱 设备信息'
+                                font_style: 'H6'
+
+                            MDLabel:
+                                text: f'APP版本: Orange 6 Sensor Hub v1.0.0'
+                                font_style: 'Body2'
+                                theme_text_color: 'Secondary'
+
+                            MDLabel:
+                                text: f'架构: arm64-v8a'
+                                font_style: 'Body2'
+                                theme_text_color: 'Secondary'
+
+                            MDLabel:
+                                text: f'打包方式: Buildozer + KivyMD'
+                                font_style: 'Body2'
+                                theme_text_color: 'Secondary'
+
+                            MDLabel:
+                                text: f'传感器桥接: pyjnius JNI'
+                                font_style: 'Body2'
+                                theme_text_color: 'Secondary'
+
+                        MDCard:
+                            size_hint_y: None
+                            height: dp(160)
+                            padding: dp(16)
+                            orientation: 'vertical'
+                            elevation: 2
+                            radius: [dp(12),]
+
+                            MDLabel:
+                                text: '🔐 权限状态'
+                                font_style: 'H6'
+
+                            MDBoxLayout:
+                                orientation: 'horizontal'
+                                size_hint_y: None
+                                height: dp(30)
+                                spacing: dp(8)
+
+                                MDIcon:
+                                    icon: 'check-circle'
+                                    theme_text_color: 'Custom'
+                                    text_color: 0.2, 0.8, 0.2, 1
+                                    size_hint_x: None
+                                    width: dp(24)
+
+                                MDLabel:
+                                    text: '相机 - 已授权'
+                                    font_style: 'Body2'
+
+                            MDBoxLayout:
+                                orientation: 'horizontal'
+                                size_hint_y: None
+                                height: dp(30)
+                                spacing: dp(8)
+
+                                MDIcon:
+                                    icon: 'check-circle'
+                                    theme_text_color: 'Custom'
+                                    text_color: 0.2, 0.8, 0.2, 1
+                                    size_hint_x: None
+                                    width: dp(24)
+
+                                MDLabel:
+                                    text: '麦克风 - 已授权'
+                                    font_style: 'Body2'
+
+                            MDBoxLayout:
+                                orientation: 'horizontal'
+                                size_hint_y: None
+                                height: dp(30)
+                                spacing: dp(8)
+
+                                MDIcon:
+                                    icon: 'check-circle'
+                                    theme_text_color: 'Custom'
+                                    text_color: 0.2, 0.8, 0.2, 1
+                                    size_hint_x: None
+                                    width: dp(24)
+
+                                MDLabel:
+                                    text: 'GPS定位 - 已授权'
+                                    font_style: 'Body2'
+
+                            MDBoxLayout:
+                                orientation: 'horizontal'
+                                size_hint_y: None
+                                height: dp(30)
+                                spacing: dp(8)
+
+                                MDIcon:
+                                    icon: 'check-circle'
+                                    theme_text_color: 'Custom'
+                                    text_color: 0.2, 0.8, 0.2, 1
+                                    size_hint_x: None
+                                    width: dp(24)
+
+                                MDLabel:
+                                    text: '传感器 - 已激活'
+                                    font_style: 'Body2'
+
+
+# ========== 自定义组件 ==========
+
+<SensorRow@MDBoxLayout>:
+    """单行传感器显示组件（用于仪表盘）"""
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(36)
+    spacing: dp(8)
+    padding: dp(4), 0
+
+    sensor_name: ''
+    sensor_icon: ''
+    sensor_value: ''
+    sensor_unit: ''
+    status_color: (0.5, 0.5, 0.5, 1)
+
+    MDLabel:
+        text: f'{root.sensor_icon} {root.sensor_name}'
+        font_style: 'Subtitle2'
+        size_hint_x: 0.35
+        theme_text_color: 'Primary'
+
+    MDLabel:
+        text: root.sensor_value
+        font_style: 'Caption'
+        size_hint_x: 0.45
+        theme_text_color: 'Secondary'
+        halign: 'center'
+
+    Widget:
+        size_hint_x: 0.05
+
+    MDIcon:
+        icon: 'circle'
+        theme_text_color: 'Custom'
+        text_color: root.status_color
+        size_hint_x: None
+        width: dp(16)
+        font_size: dp(12)
+
+
+<SensorDetailCard@MDCard>:
+    """传感器三轴详情卡片（用于传感器总览页）"""
+    size_hint_y: None
+    height: dp(100)
+    padding: dp(12)
+    spacing: dp(8)
+    orientation: 'horizontal'
+    elevation: 2
+    radius: [dp(12),]
+
+    sensor_name: ''
+    sensor_icon: ''
+    sensor_key: ''
+    value_x: '0.0'
+    value_y: '0.0'
+    value_z: '0.0'
+    unit: ''
+    status_color: (0.5, 0.5, 0.5, 1)
+
+    MDBoxLayout:
+        orientation: 'vertical'
+        size_hint_x: 0.3
+        spacing: dp(4)
+
+        MDLabel:
+            text: f'{root.sensor_icon} {root.sensor_name}'
+            font_style: 'Subtitle2'
+            theme_text_color: 'Primary'
+            shorten: True
+
+        MDIcon:
+            icon: 'circle'
+            theme_text_color: 'Custom'
+            text_color: root.status_color
+            size_hint_y: None
+            height: dp(16)
+            font_size: dp(12)
+
+    MDBoxLayout:
+        orientation: 'vertical'
+        size_hint_x: 0.5
+        spacing: dp(2)
+
+        MDLabel:
+            text: f'X: {root.value_x}'
+            font_style: 'Caption'
+            theme_text_color: 'Secondary'
+
+        MDLabel:
+            text: f'Y: {root.value_y}'
+            font_style: 'Caption'
+            theme_text_color: 'Secondary'
+
+        MDLabel:
+            text: f'Z: {root.value_z}'
+            font_style: 'Caption'
+            theme_text_color: 'Secondary'
+
+    MDBoxLayout:
+        orientation: 'vertical'
+        size_hint_x: 0.2
+        spacing: dp(4)
+
+        MDLabel:
+            text: root.unit
+            font_style: 'Caption'
+            theme_text_color: 'Primary'
+            halign: 'center'
+            bold: True
