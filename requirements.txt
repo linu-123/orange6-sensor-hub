@@ -1,0 +1,16 @@
+# Orange 6 Sensor Hub - 依赖清单
+# 编译 APK 所需 Python 包
+
+# === 核心框架 ===
+kivy>=2.1.0
+kivymd>=1.1.1
+pyjnius>=1.5.0
+plyer>=2.1.0
+
+# === Android 特定依赖 ===
+# buildozer (编译工具，在 Linux/WSL 下安装)
+# cython (buildozer 需要)
+
+# === 桌面开发辅助（非编译所需） ===
+# pillow>=9.0.0
+# numpy>=1.21.0
