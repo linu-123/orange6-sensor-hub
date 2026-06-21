@@ -4,7 +4,7 @@ package.name=orange6sensor
 package.domain=com.orange6
 source.dir=.
 version=1.0.0
-requirements=python3,kivy,kivymd,pyjnius,plyer,Pillow
+requirements=python3,kivy==2.2.1,kivymd==1.1.1,pyjnius,plyer,Pillow
 orientation=portrait
 android.api=31
 android.minapi=26
