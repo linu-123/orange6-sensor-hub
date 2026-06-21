@@ -1,0 +1,97 @@
+name: 🍊 Build Orange 6 APK (arm64-v8a)
+
+on:
+  workflow_dispatch:       # 手动触发
+  push:
+    branches: [ main ]     # 推送 main 分支时自动编译
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🛠 Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            python3-pip python3-dev python3-venv \
+            git zip unzip openjdk-17-jdk \
+            build-essential ccache \
+            libncurses5-dev libssl-dev libffi-dev \
+            autoconf automake libtool pkg-config \
+            curl wget
+
+      - name: 🐍 Install Python dependencies
+        run: |
+          pip install --quiet --upgrade pip
+          pip install --quiet buildozer cython
+
+      - name: 📋 Check build configuration
+        run: |
+          echo "=== Build Configuration ==="
+          echo "Arch: arm64-v8a (Orange 6 required)"
+          echo "API: Android 12 (31)"
+          echo "Framework: Kivy 2.1 + KivyMD 1.1"
+          echo "Sensors: pyjnius JNI bridge"
+          grep -E "android.archs|android.api|android.minapi|requirements" buildozer.spec
+
+      - name: 📦 Cache Android SDK/NDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer
+            ~/.gradle
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            ${{ runner.os }}-buildozer-
+
+      - name: 🏗 Build APK (arm64-v8a)
+        run: |
+          mkdir -p bin
+          buildozer android debug 2>&1
+
+      - name: 🔍 Find generated APK
+        id: find_apk
+        run: |
+          apk_file=$(ls -la bin/*.apk 2>/dev/null || echo "")
+          if [ -z "$apk_file" ]; then
+            echo "APK not found in bin/, searching..."
+            apk_file=$(find . -name "*.apk" -type f | head -1)
+          fi
+          echo "apk_path=$apk_file" >> $GITHUB_OUTPUT
+          if [ -n "$apk_file" ]; then
+            echo "✅ Found APK: $apk_file"
+            ls -lh "$apk_file"
+          else
+            echo "❌ APK not found!"
+          fi
+
+      - name: 📤 Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: orange6-sensor-hub-arm64-v8a
+          path: |
+            bin/*.apk
+            *.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: 📋 Build Summary
+        run: |
+          echo "=============================="
+          echo "🍊 Orange 6 Sensor Hub"
+          echo "=============================="
+          if [ -f "bin/*.apk" ]; then
+            echo "✅ APK built successfully!"
+            ls -lh bin/*.apk
+          elif [ -f "*.apk" ]; then
+            echo "✅ APK built successfully!"
+            ls -lh *.apk
+          else
+            echo "❌ Build may have failed - check logs above"
+          fi
+          echo "=============================="
