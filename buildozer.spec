@@ -4,7 +4,7 @@ package.name=orange6sensor
 package.domain=com.orange6
 source.dir=.
 version=1.0.0
-requirements=python3,kivy==2.2.1,kivymd==1.1.1,pyjnius,plyer,Pillow
+requirements=python3,kivy==2.1.0,kivymd==1.1.1,pyjnius,plyer,Pillow
 orientation=portrait
 android.api=31
 android.minapi=26
@@ -14,5 +14,7 @@ android.archs=arm64-v8a
 android.permissions=CAMERA,RECORD_AUDIO,ACCESS_FINE_LOCATION,ACCESS_COARSE_LOCATION,INTERNET
 android.use_androidx=True
 android.wakelock=True
+android.build_tools=33.0.2
+android.accept_sdk_license=True
 p4a.branch=develop
 bin_dir=./bin/
