@@ -49,6 +49,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildozer-
 
+      # ↓↓↓ 这里就是新增的自动同意许可步骤 ↓↓↓
+      - name: ✅ Accept Android SDK Licenses
+        run: |
+          yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: 🏗 Build APK (arm64-v8a)
         run: |
           mkdir -p bin
