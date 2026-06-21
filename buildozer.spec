@@ -1,12 +1,3 @@
-"""
-============================================================
-🍊 Orange 6 Sensor Hub - Buildozer 打包配置
-============================================================
-目标设备: 橘子6 (Orange 6)
-CPU架构: arm64-v8a (必需! 否则无法在橘子6安装)
-框架: Kivy + KivyMD + pyjnius
-"""
-
 [app]
 title=Orange6
 package.name=orange6sensor
